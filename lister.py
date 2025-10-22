@@ -21,8 +21,8 @@ def list_cloudspaces(user, wide=False):
 
 
 
-def list_vms(user, cloudspace_id):
-    vms = get_vms(user.vco, user.customer, user.jwt, cloudspace_id)['result']
+def list_vms(user, args):
+    vms = get_vms(user.vco, user.customer, user.jwt, args.cloudspace_id)['result']
     print(f"{'NAME':<60} {'ID':<12} {'STATUS':<12} {'CREATED':<12}")
     if vms:
         for vm in vms: 

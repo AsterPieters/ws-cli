@@ -10,53 +10,40 @@ class User:
     jwt = load_token()
     vco, customer = load_user()
 
-if __name__=="__main__":
-   
-    user = User()
+def create_parser():
 
     parser = argparse.ArgumentParser(prog="ws", description="Manage whitesky resources")
     subparsers = parser.add_subparsers(dest="command")
-    
-    # Token
-    token_parser = subparsers.add_parser("token", help="Set JWT token")
-    token_parser.add_argument("token", default=None, help="JWT token")
 
-    # List
-    list_parser = subparsers.add_parser("list", help="list resources")
+    # === TOKEN ===
+    token_parser = subparsers.add_parser("token", help="Set JWT token")
+    token_parser.add_argument("token", help="JWT token")
+    token_parser.set_defaults(func=save_token)
+
+    # === LIST ===
+    list_parser = subparsers.add_parser("list", help="List resources")
     list_subparsers = list_parser.add_subparsers(dest="list_command")
 
-    # Describe
-    describe_parser = subparsers.add_parser("describe", help="describe resource")
-    describe_subparsers = describe_parser.add_subparsers(dest="describe_command")
+    cloudspaces_parser = list_subparsers.add_parser("cloudspaces", help="List cloudspaces")
+    cloudspaces_parser.set_defaults(func=list_cloudspaces)
 
-    # List cloudspaces
-    list_subparsers.add_parser("cloudspaces", help="list cloudspaces")
+    vms_parser = list_subparsers.add_parser("vms", help="List virtual machines")
+    vms_parser.add_argument("cloudspace_id", help="Cloudspace name")
+    vms_parser.set_defaults(func=list_vms)
 
-    # List vms
-    vms_parser = list_subparsers.add_parser("vms", help="list virtual machines")
-    vms_parser.add_argument("cloudspace", default=None, help="cloudspace")
+    return parser
 
-    # Describe cloudspace
+def main():
+    user = User()
 
-
-
+    parser = create_parser()
     args = parser.parse_args()
 
-    if args.command == "list":
-        if args.list_command == "cloudspaces":
-            list_cloudspaces(user)
-        elif args.list_command == "vms":
-            list_vms(user, args.cloudspace)
-        else:
-            list_parser.print_help()
-    
-    elif args.command == "describe":
-        if args.list_command == "cloudspace":
-            describe_cloudspace(user, args.cloudspace)
-
-
-    elif args.command == "token":
-        save_token(args.token)
-    
+    if hasattr(args, "func"):
+        args.func(user, args)
     else:
-        parser.print_help()   
+        parser.print_help()
+
+
+if __name__ == "__main__":
+    main()

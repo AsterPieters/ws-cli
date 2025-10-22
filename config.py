@@ -26,7 +26,7 @@ def load_token() -> str | None:
 
 def load_user():
     if not os.path.exists(CONFIG_FILE):
-        return None
+        sys.exit()
     with open(CONFIG_FILE, "r") as f:
         data = json.load(f)
         vco = data.get("vco")
