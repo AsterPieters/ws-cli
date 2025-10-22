@@ -1,15 +1,14 @@
 #!/bin/python3
 import argparse
 
-from _token import load_token, save_token
+from config import load_token, save_token, load_user
 from lister import list_cloudspaces, list_vms
 from dataclasses import dataclass
 
 @dataclass
 class User:
     jwt = load_token()
-    vco = "cloud.gig.tech"
-    customer = "gigtech_nv_--_engineering_1"
+    vco, customer = load_user()
 
 if __name__=="__main__":
    
