@@ -1,6 +1,6 @@
 import datetime
 
-from fetcher import get_cloudspaces, get_vms
+from tools.fetcher import get_cloudspaces, get_vms
 
 def list_cloudspaces(config, wide=False):
     cs = get_cloudspaces(config.vco, config.customer, config.jwt)
