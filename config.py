@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import json
 import base64
@@ -6,56 +7,74 @@ import base64
 CONFIG_DIR = os.path.expanduser("~/.ws-cli")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 
-def save_token(token: str):
-    os.makedirs(CONFIG_DIR, exist_ok=True)
-    with open(CONFIG_FILE, "w") as f:
-        json.dump({"jwt": token}, f)
-    os.chmod(CONFIG_FILE, 0o600)  # only owner can read/write
+class Config:
+    def __init__(self):
+        check_config() 
+        self.load_config()
 
-def load_token() -> str | None:
+
+    def load_config(self) -> str | None:
+        with open(CONFIG_FILE, "r") as f:
+            data = json.load(f)
+            self.jwt = data.get("jwt")
+            self.vco = data.get("vco")
+            self.customer = data.get("customer")
+
+def check_config():
     if not os.path.exists(CONFIG_FILE):
-        return None
-    with open(CONFIG_FILE, "r") as f:
-        data = json.load(f)
-        jwt = data.get("jwt")
-    if not jwt:
-        print("Please set your JWT token: ws token \"YOUR TOKEN\"")
+        print("Please create a config using: ws config set_token <<JWT>>")
         sys.exit()
 
-    return jwt
-
-def load_user():
-    if not os.path.exists(CONFIG_FILE):
-        sys.exit()
-    with open(CONFIG_FILE, "r") as f:
-        data = json.load(f)
-        vco = data.get("vco")
-        customer = data.get("customer")
-    if not vco:
-        print("Please set your vco")
-        sys.exit()
-    elif not customer:
-        print("Please set your customer")
-        sys.exit()
-    else:
-        return vco, customer
-
-def decode_jwt_payload(jwt_token):
-    # Split the JWT into its three parts
+def get_jwt_payload(jwt_token):
+    # Convert JWT to decoded python dict
     header, payload, signature = jwt_token.split('.')
-
-    # JWTs use base64url encoding (replace - and _)
-    # Also pad with '=' if needed
     padded_payload = payload + '=' * (-len(payload) % 4)
-
-    # Decode from Base64URL
     decoded_bytes = base64.urlsafe_b64decode(padded_payload)
     decoded_json = decoded_bytes.decode('utf-8')
+    payload =  json.loads(decoded_json)
 
-    # Convert JSON string to a Python dict
-    return json.loads(decoded_json)
+    # Grab the VCO
+    vco = payload['azp'].replace("-",".")
 
-    # Config
-    payload = decode_jwt_payload(user.jwt)
-    print(json.dumps(payload, indent=4))
+    # Grab the customers
+    data = payload['scope']
+    pattern = re.compile(r"^user:memberof:[^.]+\.customers\.[^.]+$")
+    filtered = [line for line in data if pattern.match(line)]
+    customers = [line.rsplit('.', 1)[-1] for line in filtered]
+    
+    return vco, customers
+
+def create_config(jwt):
+    """ (Re)create configuration """
+
+    vco, customers = get_jwt_payload(jwt)
+    customer = customers[0]
+
+    print(f"Defaulting {customer} out of customers: {customers}")
+    
+    config = {
+        "jwt": jwt,
+        "vco": vco,
+        "customer": customer
+    }
+    
+    # Create file
+    os.makedirs(CONFIG_DIR, exist_ok=True)
+    with open(CONFIG_FILE, "w") as f:
+        json.dump(config, f, indent=4)
+    os.chmod(CONFIG_FILE, 0o600)
+
+    print(f"(Re)generated config file at {CONFIG_FILE}")
+
+def set_customer(_, args):
+    check_config()
+
+    with open(CONFIG_FILE, "r") as f:
+        config = json.load(f)
+
+    config['customer'] = args.customer
+
+    with open(CONFIG_FILE, "w") as f:
+        json.dump(config, f, indent=4)
+    print(f"Set customer to {args.customer}")
 

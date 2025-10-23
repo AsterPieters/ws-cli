@@ -2,8 +2,8 @@ import datetime
 
 from fetcher import get_cloudspaces, get_vms
 
-def list_cloudspaces(user, wide=False):
-    cs = get_cloudspaces(user.vco, user.customer, user.jwt)
+def list_cloudspaces(config, wide=False):
+    cs = get_cloudspaces(config.vco, config.customer, config.jwt)
     cloudspaces = cs['result']
 
     if wide: 
@@ -18,11 +18,8 @@ def list_cloudspaces(user, wide=False):
             created = datetime.datetime.fromtimestamp(cs['creation_time'], tz=datetime.UTC).strftime('%Y-%m-%d')
             print(f"{cs['name']:<60} {cs['cloudspace_id']:<30} {cs['location']:<20} {cs['status']:<12}")
 
-
-
-
-def list_vms(user, args):
-    vms = get_vms(user.vco, user.customer, user.jwt, args.cloudspace_id)['result']
+def list_vms(config, args):
+    vms = get_vms(config.vco, config.customer, config.jwt, args.cloudspace_id)['result']
     print(f"{'NAME':<60} {'ID':<12} {'STATUS':<12} {'CREATED':<12}")
     if vms:
         for vm in vms: 
