@@ -1,8 +1,8 @@
 #!/bin/python3
 import argparse
 
-from config import Config, create_config, set_customer
-from lister import list_cloudspaces, list_vms
+from tools.config import Config, create_config, set_customer
+from tools.lister import list_cloudspaces, list_vms
 
 def create_parser():
 

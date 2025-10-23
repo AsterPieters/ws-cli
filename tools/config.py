@@ -4,7 +4,7 @@ import sys
 import json
 import base64
 
-CONFIG_DIR = os.path.expanduser("~/.ws-cli")
+CONFIG_DIR = os.path.expanduser("~/.config/ws-cli")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 
 class Config:
